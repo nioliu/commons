@@ -1,4 +1,4 @@
-module common
+module github.com.nioliu/commons
 
 go 1.18
 
