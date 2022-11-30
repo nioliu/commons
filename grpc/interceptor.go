@@ -27,7 +27,7 @@ func CallLog(ctx context.Context, req interface{},
 	infos := map[string]interface{}{
 		"RemoteIp":       remoteIp,
 		"RemoteProtocol": remoteProtocol,
-		"ctx":            ctx,
+		"ctx":            incomingContext,
 		"Req":            req,
 		"FullMethod":     info.FullMethod,
 		"Server":         info.Server,
