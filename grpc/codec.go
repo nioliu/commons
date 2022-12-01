@@ -42,7 +42,20 @@ func (j *JsonCodec) Marshal(v interface{}) ([]byte, error) {
 }
 
 func (j *JsonCodec) Unmarshal(data []byte, v interface{}) error {
-	return json.Unmarshal(data, v)
+	t := reflect.ValueOf(v)
+	if t.Kind() != reflect.Pointer {
+		return NotPointer
+	}
+	t = t.Elem()
+	switch t.Kind() {
+	case reflect.Slice:
+		t.SetBytes(data)
+		return nil
+	case reflect.Struct:
+		return json.Unmarshal(data, v)
+	default:
+		return UnSupportedType
+	}
 }
 
 func (j *JsonCodec) String() string {
