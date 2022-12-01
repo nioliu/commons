@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"encoding/json"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -35,7 +36,9 @@ func CallLog(ctx context.Context, req interface{},
 		"Error":          err,
 	}
 
-	logger.Info("CallLog", zap.Any("info", infos))
+	infoJson, _ := json.Marshal(infos)
+
+	logger.Info("CallLog", zap.String("info", string(infoJson)))
 	return resp, err
 }
 
@@ -50,6 +53,8 @@ func BackCallLog(ctx context.Context, method string, req, reply interface{},
 		"Error":  err,
 	}
 
-	logger.Info("BackCallLog", zap.Any("info", infos))
+	jsonInfo, _ := json.Marshal(infos)
+
+	logger.Info("BackCallLog", zap.String("info", string(jsonInfo)))
 	return err
 }
