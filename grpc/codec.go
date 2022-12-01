@@ -15,6 +15,10 @@ var (
 type JsonCodec struct {
 }
 
+func (j *JsonCodec) Name() string {
+	return j.String()
+}
+
 func (j *JsonCodec) Marshal(v interface{}) ([]byte, error) {
 	marshal, err := json.Marshal(v)
 	if err != nil {
@@ -32,6 +36,10 @@ func (j *JsonCodec) String() string {
 }
 
 type ByteCodec struct {
+}
+
+func (b *ByteCodec) Name() string {
+	return b.String()
 }
 
 func (b *ByteCodec) Marshal(v interface{}) ([]byte, error) {
