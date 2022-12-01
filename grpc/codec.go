@@ -24,9 +24,6 @@ func (j *JsonCodec) Marshal(v interface{}) ([]byte, error) {
 	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
-	if t.IsNil() {
-		return nil, nil
-	}
 	switch t.Kind() {
 	case reflect.Slice:
 		return t.Bytes(), nil
