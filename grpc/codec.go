@@ -8,8 +8,8 @@ import (
 
 var (
 	UnMatchedCodecType = errors.New("unmatched codec type for current req and rsp type")
-
-	NotPointer = errors.New("parameter is not pointer")
+	UnSupportedType    = errors.New("unsupported input or output type")
+	NotPointer         = errors.New("parameter is not pointer")
 )
 
 type JsonCodec struct {
@@ -20,11 +20,25 @@ func (j *JsonCodec) Name() string {
 }
 
 func (j *JsonCodec) Marshal(v interface{}) ([]byte, error) {
-	marshal, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
+	t := reflect.ValueOf(v)
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
 	}
-	return marshal, nil
+	if t.IsNil() {
+		return nil, nil
+	}
+	switch t.Kind() {
+	case reflect.Slice:
+		return t.Bytes(), nil
+	case reflect.Struct:
+		marshal, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		return marshal, nil
+	default:
+		return nil, UnSupportedType
+	}
 }
 
 func (j *JsonCodec) Unmarshal(data []byte, v interface{}) error {
