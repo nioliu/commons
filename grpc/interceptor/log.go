@@ -70,7 +70,7 @@ func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) 
 
 		// metadata
 		md, b := metadata.FromOutgoingContext(ctx)
-		if !b {
+		if b {
 			for k, v := range md {
 				infos[k] = v
 			}
