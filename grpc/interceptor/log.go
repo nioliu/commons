@@ -24,10 +24,11 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger) grpc.UnaryServerInt
 			remoteProtocol = p.Addr.Network()
 		}
 
+		resp, err = handler(ctx, req)
+
 		infos := map[string]interface{}{
 			"RemoteIp":       remoteIp,
 			"RemoteProtocol": remoteProtocol,
-			"ctx":            incomingContext,
 			"Req":            req,
 			"FullMethod":     info.FullMethod,
 			"Server":         info.Server,
