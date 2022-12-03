@@ -9,19 +9,12 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-func GetCallLogFunc(ctx context.Context, logger *zap.Logger, key ...interface{}) grpc.UnaryServerInterceptor {
+func GetCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) grpc.UnaryServerInterceptor {
 	if logger == nil {
 		logger, _ = zap.NewDevelopment()
 	}
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		incomingContext, _ := metadata.FromIncomingContext(ctx)
-
-		ctxMap := make(map[interface{}]interface{})
-		if key != nil {
-			for _, k := range key {
-				ctxMap[k] = ctx.Value(k)
-			}
-		}
 
 		p, b := peer.FromContext(ctx)
 		var remoteIp string
@@ -42,7 +35,12 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger, key ...interface{})
 			"Server":         info.Server,
 			"Resp":           resp,
 			"Error":          err,
-			"ContextMap":     ctxMap,
+		}
+
+		if key != nil {
+			for _, k := range key {
+				infos[k] = ctx.Value(k)
+			}
 		}
 
 		infoJson, _ := json.Marshal(infos)
@@ -53,26 +51,24 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger, key ...interface{})
 }
 
 // GetBackCallLogFunc Stdout log and customer fields
-func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...interface{}) grpc.UnaryClientInterceptor {
+func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) grpc.UnaryClientInterceptor {
 	if logger == nil {
 		logger, _ = zap.NewDevelopment()
 	}
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		err := invoker(ctx, method, req, reply, cc, opts...)
 
-		ctxMap := make(map[interface{}]interface{})
-		if key != nil {
-			for _, k := range key {
-				ctxMap[k] = ctx.Value(k)
-			}
+		infos := map[string]interface{}{
+			"Req":    req,
+			"target": cc.Target(),
+			"Resp":   reply,
+			"Error":  err,
 		}
 
-		infos := map[string]interface{}{
-			"Req":        req,
-			"target":     cc.Target(),
-			"Resp":       reply,
-			"Error":      err,
-			"ContextMap": ctxMap,
+		if key != nil {
+			for _, k := range key {
+				infos[k] = ctx.Value(k)
+			}
 		}
 
 		jsonInfo, err := json.Marshal(infos)
