@@ -75,7 +75,7 @@ func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...interfac
 			"ContextMap": ctxMap,
 		}
 
-		jsonInfo, _ := json.Marshal(infos)
+		jsonInfo, err := json.Marshal(infos)
 
 		logger.Info("BackCallLog", zap.String("info", string(jsonInfo)))
 		return err
