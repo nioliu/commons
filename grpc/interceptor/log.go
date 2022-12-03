@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-func GetCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) grpc.UnaryServerInterceptor {
+func GetCallLogFunc(ctx context.Context, logger *zap.Logger) grpc.UnaryServerInterceptor {
 	if logger == nil {
 		logger, _ = zap.NewDevelopment()
 	}
@@ -24,8 +24,6 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) grpc
 			remoteProtocol = p.Addr.Network()
 		}
 
-		resp, err = handler(ctx, req)
-
 		infos := map[string]interface{}{
 			"RemoteIp":       remoteIp,
 			"RemoteProtocol": remoteProtocol,
@@ -37,10 +35,8 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) grpc
 			"Error":          err,
 		}
 
-		if key != nil {
-			for _, k := range key {
-				infos[k] = ctx.Value(k)
-			}
+		for k, v := range incomingContext {
+			infos[k] = v
 		}
 
 		infoJson, _ := json.Marshal(infos)
@@ -50,7 +46,7 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) grpc
 	}
 }
 
-// GetBackCallLogFunc Stdout log and customer fields
+// GetBackCallLogFunc Stdout log and customer fields, key is from ctx, will do ctx.Value(key...)
 func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) grpc.UnaryClientInterceptor {
 	if logger == nil {
 		logger, _ = zap.NewDevelopment()
@@ -65,9 +61,18 @@ func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) 
 			"Error":  err,
 		}
 
+		// customer key
 		if key != nil {
 			for _, k := range key {
 				infos[k] = ctx.Value(k)
+			}
+		}
+
+		// metadata
+		md, b := metadata.FromOutgoingContext(ctx)
+		if !b {
+			for k, v := range md {
+				infos[k] = v
 			}
 		}
 
