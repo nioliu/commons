@@ -1,13 +1,22 @@
 package component
 
 import (
+	"log"
+	"net"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestCreateSnowflakeId(t *testing.T) {
-	id := CreateSnowflakeId("123")
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	println(interfaces)
+
+	i := interfaces[0]
+	id := CreateSnowflakeId(i.HardwareAddr.String())
 	println(id)
 }
 

@@ -1,6 +1,7 @@
 package component
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -34,12 +35,13 @@ type confs struct {
 func CreateSnowflakeId(machineId string) string {
 	if !clear.doing {
 		clear.Mutex.Lock()
-		go ClearExpiredConf()
+		go clearExpiredConf()
 		clear.doing = true
 		clear.Mutex.Unlock()
 	}
 	// 准备信息
-	milli := strconv.Itoa(int(time.Now().UnixMilli()))
+	now := time.Now()
+	milli := strconv.Itoa(int(now.UnixMilli()))
 	key := milli + machineId
 
 	// 同一毫秒加锁
@@ -61,12 +63,14 @@ func CreateSnowflakeId(machineId string) string {
 
 	// 序列自增
 	conf.seq += 1
+	// 固定位数
+	se := fmt.Sprintf("%.12d", conf.seq)
 	// 生成唯一id
-	return strconv.Itoa(conf.seq) + machineId + milli + strconv.Itoa(conf.mark)
+	return milli + machineId + se + strconv.Itoa(conf.mark)
 }
 
 // ClearExpiredConf clear expired conf from map
-func ClearExpiredConf() {
+func clearExpiredConf() {
 	// check again
 	if clear.doing {
 		return
