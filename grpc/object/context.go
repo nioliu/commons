@@ -2,4 +2,4 @@ package object
 
 type ContextKey string
 
-const SecondTimeStampKey = ContextKey("second timestamp")
+const RecMsgSecondTimeKey = ContextKey("receive message timestamp in second")
