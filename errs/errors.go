@@ -25,8 +25,9 @@ func (e *ErrRsp) Error() string {
 	return string(marshal)
 }
 
-func (e *ErrRsp) WithDescription(dsp string) {
+func (e *ErrRsp) WithDescription(dsp string) *ErrRsp {
 	e.Description = dsp
+	return e
 }
 
 func (e *ErrRsp) Err() *ErrRsp {
