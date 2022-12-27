@@ -25,6 +25,10 @@ func (e *ErrRsp) Error() string {
 	return string(marshal)
 }
 
+func (e *ErrRsp) WithDescription(dsp string) {
+	e.Description = dsp
+}
+
 // GetDefaultErrRsp default
 func GetDefaultErrRsp() *ErrRsp {
 	return &ErrRsp{Code: 0, Description: "Unknown"}
