@@ -34,7 +34,7 @@ func GetDatabaseError(description string) *ErrRsp {
 	return &ErrRsp{Code: 1000, Description: description}
 }
 
-func NewGrpcError(code int, description string) *ErrRsp {
+func NewError(code int, description string) *ErrRsp {
 	return &ErrRsp{Code: code, Description: description}
 }
 
