@@ -30,6 +30,10 @@ func GetDefaultErrRsp() *ErrRsp {
 	return &ErrRsp{Code: 0, Description: "Unknown"}
 }
 
+func GetDatabaseError(description string) *ErrRsp {
+	return &ErrRsp{Code: 10000, Description: description}
+}
+
 // GetInnerSystemStandardError get common error response.
 func GetInnerSystemStandardError(err error) (errRsp *ErrRsp) {
 	switch err {
