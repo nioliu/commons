@@ -31,7 +31,11 @@ func GetDefaultErrRsp() *ErrRsp {
 }
 
 func GetDatabaseError(description string) *ErrRsp {
-	return &ErrRsp{Code: 10000, Description: description}
+	return &ErrRsp{Code: 1000, Description: description}
+}
+
+func NewGrpcError(code int, description string) *ErrRsp {
+	return &ErrRsp{Code: code, Description: description}
 }
 
 // GetInnerSystemStandardError get common error response.
