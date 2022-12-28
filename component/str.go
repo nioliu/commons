@@ -41,16 +41,41 @@ func ArrToStr(arr interface{}, sep string) (str string, err error) {
 				return "", err
 			}
 			res += string(marshal) + sep
+			if i == v.Len()-1 {
+				res += string(marshal)
+			}
 		}
 	case reflect.String:
 		for i := 0; i < v.Len(); i++ {
 			res += v.Index(i).String() + sep
+			if i == v.Len()-1 {
+				res += v.Index(i).String()
+			}
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		for i := 0; i < v.Len(); i++ {
 			res += strconv.Itoa(int(v.Index(i).Int())) + sep
+			if i == v.Len()-1 {
+				res += strconv.Itoa(int(v.Index(i).Int()))
+			}
 		}
 	}
 
 	return res, nil
+}
+
+func StrArrToStr(arr []string, sep string) (string, error) {
+	if arr == nil {
+		return "", nil
+	}
+	if sep == "" {
+		return "", errors.New("lack sep parameter")
+	}
+	var res = ""
+	for i, s := range arr {
+		res += s + sep
+		if i == len(arr)-1 {
+			res += s
+		}
+	}
 }
