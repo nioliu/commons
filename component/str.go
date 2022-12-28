@@ -78,4 +78,5 @@ func StrArrToStr(arr []string, sep string) (string, error) {
 			res += s
 		}
 	}
+	return res, nil
 }
