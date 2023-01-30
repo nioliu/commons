@@ -16,7 +16,7 @@ type ErrRsp struct {
 }
 
 func (e *ErrRsp) Error() string {
-	var e2 *ErrRsp
+	e2 := &ErrRsp{}
 	*e2 = *e
 	if e2 == nil {
 		e2 = GetDefaultErrRsp()

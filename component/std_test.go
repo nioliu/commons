@@ -1,6 +1,7 @@
 package component
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -12,4 +13,8 @@ func TestFromByteToStr(t *testing.T) {
 		panic(err)
 	}
 	t.Log(string(fromByteToStr))
+}
+func TestDWQ(t *testing.T) {
+	mark := strings.SplitN("byte:{21312}", ",", 2)
+	t.Log(len(mark))
 }
