@@ -10,8 +10,8 @@ import (
 
 type ContextKey string
 
-const RecMsgSecondTimeKey = ContextKey("receive message timestamp in second")
-const TraceId = ContextKey("service trace id")
+const RecMsgSecondTimeKey = ContextKey("event_time")
+const TraceId = ContextKey("trace_id")
 
 func GetRecMsgSecondTimeFromCtx(ctx context.Context) (int64, error) {
 	// get receive msg timestamp
