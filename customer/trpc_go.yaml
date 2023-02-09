@@ -1,0 +1,140 @@
+global: #全局配置
+  namespace: ${NAMESPACE}            #环境类型，分正式production和非正式development两种类型
+  env_name: ${ENV_NAME}                    #环境名称，非正式环境下多环境的名称
+
+server: #服务端配置
+  app: ${SERVICE_NAME}                                        #业务的应用名
+  server: ${SERVICE_NAME}                             #进程服务名
+  filter: #针对所有service处理函数前后的拦截器列表
+    - recovery                                     #拦截框架创建的业务处理协程panic
+    - jaeger                                       #生成tracing信息
+    - calllog                                      #call日志流水打印
+    - runlog                                       #run日志打印
+    - debuglog                                     #debug日志打印
+    - status #debug id
+    - validation                                   #自动校验参数
+    - validation_err                               #自动将validation error转换为status error，例如 {"code":3, "name":"INVALID_ARGUMENT", "message":"invalid HttpCallbackRequest.name: illegal name", "details":[{"@type":"type.googleapis.com/rpc.BadRequest.FieldViolation", "field":"name", "description":"illegal name"}]}
+  service: #业务服务提供的service，可以有多个
+    - name: mpay.payment.card_channel.CardChannel      #service的路由名称
+      ip: ${SVR_IP}                            #服务监听ip地址 可使用占位符 ${ip},ip和nic二选一，优先ip
+      #nic: eth0
+      port: ${SERVICE_PORT}                #服务监听端口 可使用占位符 ${port}
+      network: tcp                             #网络监听类型  tcp udp
+      protocol: trpc               #应用层协议 trpc http
+      timeout: ${SERVICE_TIMEOUT}                            #请求最长处理时间 单位 毫秒
+
+
+client: #客户端调用的后端配置                                   #针对所有后端的请求最长处理时间
+  namespace: ${NAMESPACE}                           #针对所有后端的环境
+  filter: #针对所有后端调用函数前后的拦截器列表
+    - jaeger
+    - backcalllog
+    - debuglog
+  service: #针对单个后端的配置
+    - name: trpc.http.midaspay.pingpong      #后端服务的service name
+      network: tcp                             #后端服务的网络类型 tcp udp 配置优先
+      protocol: http              #应用层协议 trpc http
+      timeout: ${CLIENT_BOACOMPRA_PROXY_TIMEOUT}
+    - name: trpc.midasPay.pci.CallChannel      #后端服务的service name channel渠道配置
+      network: tcp                             #后端服务的网络类型 tcp udp 配置优先
+      protocol: tdf1                           #应用层协议 tdf1
+      target: ${CLIENT_PCI_PROXY_TARGET}              #请求服务地址
+      timeout: ${CLIENT_PCI_PROXY_TIMEOUT}                            #请求最长处理时间
+
+plugins: #插件配置
+  config:
+    config-anywhere:
+      channel_pingpong_info:
+        url: ${CHANNEL_CONFIG_URL}
+  tracing:
+    jaeger:
+      serviceName: ${SERVICE_NAME}
+      disabled: ${TRACING_ZHIYAN_DISABLE}           # false 是否不使用zhiyan tracing
+      rpc_metrics: ${TRACING_ZHIYAN_RPC_METRICS}    # false 是否生产rpc metrics
+      traceid_128bit: ${TRACING_ZHIYAN_TRACEID_128BIT} # false traceId是否要128位
+      sampler:
+        type: ${TRACING_ZHIYAN_SAMPLER_TYPE}        # const, probabilistic, rateLimiting, or remote. 取样器类型
+        param: ${TRACING_ZHIYAN_SAMPLER_PARAM}      # 1
+      reporter:
+        localAgentHostPort: ${TRACING_ZHIYAN_REPORTER_AGENT_HOST}:${TRACING_ZHIYAN_REPORTER_AGENT_PORT} # localhost:6831
+        queueSize: ${TRACING_ZHIYAN_REPORTER_QUEUE_SIZE} # 队列大小，存储采样的 span 信息，队列满了后一次性发送到 jaeger 后端 默认为 100
+        logSpans: ${TRACING_ZHIYAN_REPORTER_LOG_SPANS}   # true 是否把 Log 也推送，span 中可以携带一些日志信息
+
+  # status
+  err:
+    calllog:
+      mgo_status_error: true
+    status:
+
+  metrics: #引用metrics
+    prometheus: #启动prometheus
+      ip: ${PROMETHEUS_IP}                                 #prometheus绑定地址
+      port: ${PROMETHEUS_PORT}                                  #prometheus绑定端口
+      path: ${PROMETHEUS_PATH}                              #metrics路径
+      namespace: ${PROMETHEUS_NAMESPACE}                      #命名空间
+      subsystem: trpc                #子系统
+      rawmode: ${PROMETHEUS_RAWMOD}                            #原始模式，不会对metrics的特殊字符进行转换
+  log: #日志配置
+    default: #默认日志的配置，可支持多输出
+      - writer: console                           #控制台标准输出 默认
+        level: ${LOG_LEVEL}                              #标准输出日志的级别
+        formatter: json
+        formatter_config:
+          time_key: time
+          message_key: message
+          level_key: level
+          caller_key: caller
+
+  midaslog:
+    default:
+      - writer: console
+        level: ${LOG_LEVEL}
+        formatter: json
+        formatter_config:
+          key_time: time
+          key_message: message
+          key_level: level
+          key_caller: caller
+          encode_level: capital
+          encode_caller: short
+          encode_duration: string
+    call:
+      - writer: console
+        level: info
+        formatter: json
+        formatter_config:
+          key_time: time
+          key_message: message
+          key_level: level
+          key_caller: caller
+          encode_level: capital
+          encode_caller: short
+          encode_duration: string
+    backcall:
+      - writer: console
+        level: info
+        formatter: json
+        formatter_config:
+          key_time: time
+          key_message: message
+          key_level: level
+          key_caller: caller
+          encode_level: capital
+          encode_caller: short
+          encode_duration: string
+    run:
+      - writer: console
+        level: ${LOG_LEVEL}
+        caller_skip: 3
+        formatter: json
+        formatter_config:
+          key_time: time
+          key_message: message
+          key_level: level
+          key_caller: caller
+          encode_level: capital
+          encode_caller: short
+          encode_duration: string
+
+
+

@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
+	"time"
 )
 
 func GetCallLogFunc(ctx context.Context, logger *zap.Logger) grpc.UnaryServerInterceptor {
@@ -24,7 +25,10 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger) grpc.UnaryServerInt
 			remoteProtocol = p.Addr.Network()
 		}
 
+		before := time.Now()
 		resp, err = handler(ctx, req)
+		after := time.Now()
+		duration := after.Sub(before).Microseconds()
 
 		infos := map[string]interface{}{
 			"RemoteIp":       remoteIp,
@@ -34,6 +38,7 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger) grpc.UnaryServerInt
 			"Server":         info.Server,
 			"Resp":           resp,
 			"Error":          err,
+			"Duration":       duration,
 		}
 
 		for k, v := range incomingContext {
@@ -53,13 +58,16 @@ func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) 
 		logger, _ = zap.NewDevelopment()
 	}
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		before := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
+		duration := time.Now().Sub(before)
 
 		infos := map[string]interface{}{
-			"Req":    req,
-			"target": cc.Target(),
-			"Resp":   reply,
-			"Error":  err,
+			"Req":      req,
+			"target":   cc.Target(),
+			"Resp":     reply,
+			"Error":    err,
+			"Duration": duration,
 		}
 
 		// customer key
