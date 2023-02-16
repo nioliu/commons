@@ -6,7 +6,7 @@ import (
 )
 
 type EmailVerifier struct {
-	*email.Email
+	email *email.Email
 
 	FromEmailName   string
 	FromEmailPass   string
@@ -18,7 +18,7 @@ type EmailVerifier struct {
 
 func newEmailVerifier(email *email.Email, fromEmailName string, fromEmailPass string,
 	emailServerHost string, emailServerAddr string) *EmailVerifier {
-	return &EmailVerifier{Email: email, FromEmailName: fromEmailName,
+	return &EmailVerifier{email: email, FromEmailName: fromEmailName,
 		FromEmailPass: fromEmailPass, EmailServerHost: emailServerHost,
 		EmailServerAddr: emailServerAddr}
 }
@@ -35,12 +35,12 @@ func GetNewEmail(to []string, bcc []string, From, FromEmailName, FromEmailPass, 
 }
 
 func (e *EmailVerifier) SendContentEmail(subject string, content []byte, attaches ...string) error {
-	e.Text = content
-	e.Subject = subject
+	e.email.Text = content
+	e.email.Subject = subject
 
 	if attaches != nil {
 		for _, f := range attaches {
-			_, err := e.AttachFile(f)
+			_, err := e.email.AttachFile(f)
 			if err != nil {
 				return err
 			}
@@ -50,7 +50,7 @@ func (e *EmailVerifier) SendContentEmail(subject string, content []byte, attache
 	// send email
 	plainAuth := smtp.PlainAuth("", e.FromEmailName, e.FromEmailPass, e.EmailServerHost)
 
-	if err := e.Send(e.EmailServerAddr, plainAuth); err != nil {
+	if err := e.email.Send(e.EmailServerAddr, plainAuth); err != nil {
 		return err
 	}
 
