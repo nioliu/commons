@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/nioliu/protocols v0.0.0-20221205125010-64ea8cb1175a
 	go.uber.org/zap v1.23.0
 	google.golang.org/grpc v1.51.0

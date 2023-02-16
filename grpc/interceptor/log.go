@@ -3,6 +3,7 @@ package interceptor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -38,7 +39,7 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger) grpc.UnaryServerInt
 			"Server":         info.Server,
 			"Resp":           resp,
 			"Error":          err,
-			"Duration":       duration,
+			"Duration":       fmt.Sprintf("%dms", duration),
 		}
 
 		for k, v := range incomingContext {
@@ -67,7 +68,7 @@ func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) 
 			"target":   cc.Target(),
 			"Resp":     reply,
 			"Error":    err,
-			"Duration": duration,
+			"Duration": fmt.Sprintf("%dms", duration),
 		}
 
 		// customer key
