@@ -18,3 +18,10 @@ func TestDWQ(t *testing.T) {
 	mark := strings.SplitN("byte:{21312}", ",", 2)
 	t.Log(len(mark))
 }
+
+func TestRr(t *testing.T) {
+	k := []string{"123"}
+	k = k[:len(k)-1]
+	println(k == nil)
+	println(len(k))
+}
