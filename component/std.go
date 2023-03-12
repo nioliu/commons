@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// FromByteToStr From log byte to standard []byte, the format of byte is "[01 23 31 21 ...]"
-func FromByteToStr(b string) ([]byte, error) {
+// FromByteToStandard From log byte to standard []byte, the format of byte is "[01 23 31 21 ...]"
+func FromByteToStandard(b string) ([]byte, error) {
 	if len(b) == 0 {
 		return nil, nil
 	}
