@@ -62,7 +62,15 @@ func transStrType(raw string, aimKind reflect.Kind) (interface{}, error) {
 }
 
 func transStringToInt(raw string) (int, error) {
-	return strconv.Atoi(raw)
+	atoi, err := strconv.Atoi(raw)
+	if err != nil {
+		toFloat64, err2 := transStringToFloat64(raw)
+		if err2 != nil {
+			return 0, err
+		}
+		return int(toFloat64), nil
+	}
+	return atoi, nil
 }
 
 func transStringToFloat64(raw string) (float64, error) {

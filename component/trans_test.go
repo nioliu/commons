@@ -7,7 +7,7 @@ import (
 )
 
 func TestTransType(t *testing.T) {
-	transType, err := TransType(int8(3), reflect.Int32)
+	transType, err := TransType("12342.0000", reflect.Int64)
 	if err != nil {
 		log.Fatal(err)
 	}
