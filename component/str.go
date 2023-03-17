@@ -54,9 +54,10 @@ func ArrToStr(arr interface{}, sep string) (str string, err error) {
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		for i := 0; i < v.Len(); i++ {
-			res += strconv.Itoa(int(v.Index(i).Int())) + sep
 			if i == v.Len()-1 {
 				res += strconv.Itoa(int(v.Index(i).Int()))
+			} else {
+				res += strconv.Itoa(int(v.Index(i).Int())) + sep
 			}
 		}
 	}
