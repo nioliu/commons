@@ -11,7 +11,7 @@ import (
 
 // VerifyJwtFailedFunc handle error if verify jwt failed, if this func return error,
 //the grpc trace will be stopped and return
-type VerifyJwtFailedFunc func(ctx context.Context, req interface{}, err error) error
+type VerifyJwtFailedFunc func(ctx context.Context, req interface{}, err error) (bool, error)
 
 // ExtractTokenFunc extract token from ctx or req
 type ExtractTokenFunc func(ctx context.Context, req interface{}) (string, error)
@@ -30,12 +30,66 @@ type VerifyJwtImpl struct {
 	VerifyJwtFailedFunc VerifyJwtFailedFunc
 	ExtractTokenFunc    ExtractTokenFunc
 	Parser              *jwt.Parser
-	Keyfunc             jwt.Keyfunc
+	KeyFunc             jwt.Keyfunc
 }
 
-func NewDefaultJwtImpl(secretKey []byte) *VerifyJwtImpl {
-	verifyJwtFailedFunc := VerifyJwtFailedFunc(func(ctx context.Context, req interface{}, err error) error {
-		return errors.New("verify jwt failed, err: " + err.Error())
+type Option func(impl *VerifyJwtImpl)
+
+func apply(impl *VerifyJwtImpl, option ...Option) {
+	for _, o := range option {
+		o(impl)
+	}
+}
+
+func WithSecretKey(secretKey []byte) Option {
+	if secretKey == nil {
+		log.Fatal("SecretKey cannot be empty")
+	}
+	return func(impl *VerifyJwtImpl) {
+		impl.SecretKey = secretKey
+	}
+}
+
+func WithVerifyJwtFailedFunc(verifyJwtFailedFunc VerifyJwtFailedFunc) Option {
+	if verifyJwtFailedFunc == nil {
+		log.Fatal("VerifyJwtFailedFunc cannot be empty")
+	}
+	return func(impl *VerifyJwtImpl) {
+		impl.VerifyJwtFailedFunc = verifyJwtFailedFunc
+	}
+}
+
+func WithExtractTokenFunc(extractTokenFunc ExtractTokenFunc) Option {
+	if extractTokenFunc == nil {
+		log.Fatal("ExtractTokenFunc cannot be empty")
+	}
+	return func(impl *VerifyJwtImpl) {
+		impl.ExtractTokenFunc = extractTokenFunc
+	}
+}
+
+func WithParser(parser *jwt.Parser) Option {
+	if parser == nil {
+		log.Fatal("Parser cannot be empty")
+	}
+	return func(impl *VerifyJwtImpl) {
+		impl.Parser = parser
+	}
+}
+
+func WithKeyFunc(keyFunc jwt.Keyfunc) Option {
+	if keyFunc == nil {
+		log.Fatal("Keyfunc cannot be empty")
+	}
+	return func(impl *VerifyJwtImpl) {
+		impl.KeyFunc = keyFunc
+	}
+}
+
+func NewDefaultJwtImpl(secretKey []byte, option ...Option) *VerifyJwtImpl {
+	verifyJwtFailedFunc := VerifyJwtFailedFunc(func(ctx context.Context,
+		req interface{}, err error) (bool, error) {
+		return false, errors.New("verify jwt failed, err: " + err.Error())
 	})
 
 	extractTokenFunc := ExtractTokenFunc(func(ctx context.Context, req interface{}) (string, error) {
@@ -53,13 +107,18 @@ func NewDefaultJwtImpl(secretKey []byte) *VerifyJwtImpl {
 		return secretKey, nil
 	})
 
-	return &VerifyJwtImpl{
+	v := &VerifyJwtImpl{
 		SecretKey:           secretKey,
 		VerifyJwtFailedFunc: verifyJwtFailedFunc,
 		ExtractTokenFunc:    extractTokenFunc,
 		Parser:              parser,
-		Keyfunc:             keyFunc,
+		KeyFunc:             keyFunc,
 	}
+
+	// overwrite default value
+	apply(v, option...)
+
+	return v
 }
 
 func NewVerifyJwtImpl(
@@ -74,7 +133,7 @@ func NewVerifyJwtImpl(
 		VerifyJwtFailedFunc: verifyJwtFailedFunc,
 		ExtractTokenFunc:    extractTokenFunc,
 		Parser:              parser,
-		Keyfunc:             keyFunc,
+		KeyFunc:             keyFunc,
 	}
 }
 
@@ -91,7 +150,7 @@ func checkVerifyJwtImpl(obj *VerifyJwtImpl) error {
 	if obj.Parser == nil {
 		return errors.New("Parser cannot be empty")
 	}
-	if obj.Keyfunc == nil {
+	if obj.KeyFunc == nil {
 		return errors.New("Keyfunc cannot be empty")
 	}
 	return nil
@@ -104,26 +163,40 @@ func GetJwtVerifyInterceptor(ctx context.Context, verifyJwt *VerifyJwtImpl) grpc
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler) (resp interface{}, err error) {
+		var parsed *jwt.Token
 		token, err := verifyJwt.ExtractTokenFunc(ctx, req)
 		if err != nil {
-			if err := verifyJwt.VerifyJwtFailedFunc(ctx, req, err); err != nil {
+			pass, err := verifyJwt.VerifyJwtFailedFunc(ctx, req, err)
+			if err != nil {
 				return nil, err
+			}
+			if pass {
+				goto doHandle
 			}
 		}
 
-		parsed, err := verifyJwt.Parser.Parse(token, verifyJwt.Keyfunc)
+		parsed, err = verifyJwt.Parser.Parse(token, verifyJwt.KeyFunc)
 		if err != nil {
-			if err := verifyJwt.VerifyJwtFailedFunc(ctx, req, err); err != nil {
+			pass, err := verifyJwt.VerifyJwtFailedFunc(ctx, req, err)
+			if err != nil {
 				return nil, err
+			}
+			if pass {
+				goto doHandle
 			}
 		}
 
 		if !parsed.Valid {
-			if err := verifyJwt.VerifyJwtFailedFunc(ctx, req, TokenNotValid); err != nil {
+			pass, err := verifyJwt.VerifyJwtFailedFunc(ctx, req, err)
+			if err != nil {
 				return nil, err
+			}
+			if pass {
+				goto doHandle
 			}
 		}
 
+	doHandle:
 		return handler(ctx, req)
 	}
 }
