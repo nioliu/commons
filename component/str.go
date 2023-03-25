@@ -74,9 +74,10 @@ func StrArrToStr(arr []string, sep string) (string, error) {
 	}
 	var res = ""
 	for i, s := range arr {
-		res += s + sep
 		if i == len(arr)-1 {
 			res += s
+		} else {
+			res += s + sep
 		}
 	}
 	return res, nil
