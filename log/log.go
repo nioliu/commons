@@ -110,7 +110,9 @@ func (logger *LoggerConfig) getKvFromCtx(ctx context.Context) []zap.Field {
 			}
 		}
 
-		fields = append(fields, zap.Any(k, fieldValue))
+		if fieldValue != "" {
+			fields = append(fields, zap.Any(k, fieldValue))
+		}
 	}
 
 	return fields
