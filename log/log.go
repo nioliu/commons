@@ -162,3 +162,11 @@ func DPanicWithCtxFields(ctx context.Context, msg string, fields ...zap.Field) {
 	}
 	logger.engine.DPanic(msg, fields...)
 }
+
+func FatalWithCtxFields(ctx context.Context, msg string, fields ...zap.Field) {
+	logger := getDefaultLogger()
+	if ctx != nil {
+		fields = append(fields, logger.getKvFromCtx(ctx)...)
+	}
+	logger.engine.Fatal(msg, fields...)
+}
