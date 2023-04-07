@@ -36,6 +36,10 @@ func newDefaultLogger() *LoggerConfig {
 	return l
 }
 
+func getRawLogger() *zap.Logger {
+	return logger.engine
+}
+
 func (logger *LoggerConfig) WithContextFields(ctxFields map[string]interface{}) {
 	logger.ctxFields = ctxFields
 }
