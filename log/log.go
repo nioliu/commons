@@ -36,7 +36,7 @@ func newDefaultLogger() *LoggerConfig {
 	return l
 }
 
-func getRawLogger() *zap.Logger {
+func GetRawLogger() *zap.Logger {
 	return logger.engine
 }
 
