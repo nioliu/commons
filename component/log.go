@@ -15,18 +15,25 @@ type LoggerConfig struct {
 	printGrpcMetadata bool                   // choose if print grpc metadata, it also should set the key and value to ctxFields
 }
 
-var Logger = &LoggerConfig{}
+var logger = &LoggerConfig{}
 var err error
 
 func init() {
-	Logger.engine, err = GetStandardLogger("Asia/Shanghai",
+	logger = newDefaultLogger()
+}
+
+func newDefaultLogger() *LoggerConfig {
+	l := &LoggerConfig{}
+	l.engine, err = GetStandardLogger("Asia/Shanghai",
 		"2006-01-02 15:04:05 Z07", "time", "")
 	if err != nil {
 		log.Fatal("init logger failed", zap.Error(err))
 	}
 
-	Logger.WithGrpcMetadata()
-	Logger.WithContextFields(getStandardCtxFieldsMap())
+	l.WithGrpcMetadata()
+	l.WithContextFields(getStandardCtxFieldsMap())
+
+	return l
 }
 
 func (logger *LoggerConfig) WithContextFields(ctxFields map[string]interface{}) {
@@ -105,55 +112,49 @@ func (logger *LoggerConfig) getKvFromCtx(ctx context.Context) []zap.Field {
 	return fields
 }
 
-func (logger *LoggerConfig) Debug(ctx context.Context, msg string, fields ...zap.Field) {
+func getDefaultLogger() *LoggerConfig {
+	if logger == nil {
+		logger = newDefaultLogger()
+	}
+	return logger
+}
+
+func DebugWithCtxFields(ctx context.Context, msg string, fields ...zap.Field) {
+	logger := getDefaultLogger()
 	if ctx != nil {
 		fields = append(fields, logger.getKvFromCtx(ctx)...)
 	}
 	logger.engine.Debug(msg, fields...)
 }
 
-func (logger *LoggerConfig) Info(ctx context.Context, msg string, fields ...zap.Field) {
+func InfoWithCtxFields(ctx context.Context, msg string, fields ...zap.Field) {
+	logger := getDefaultLogger()
 	if ctx != nil {
 		fields = append(fields, logger.getKvFromCtx(ctx)...)
 	}
 	logger.engine.Info(msg, fields...)
 }
 
-func (logger *LoggerConfig) Warn(ctx context.Context, msg string, fields ...zap.Field) {
+func WarnWithCtxFields(ctx context.Context, msg string, fields ...zap.Field) {
+	logger := getDefaultLogger()
 	if ctx != nil {
 		fields = append(fields, logger.getKvFromCtx(ctx)...)
 	}
 	logger.engine.Warn(msg, fields...)
 }
 
-func (logger *LoggerConfig) Error(ctx context.Context, msg string, fields ...zap.Field) {
+func ErrorWithCtxFields(ctx context.Context, msg string, fields ...zap.Field) {
+	logger := getDefaultLogger()
 	if ctx != nil {
 		fields = append(fields, logger.getKvFromCtx(ctx)...)
 	}
 	logger.engine.Error(msg, fields...)
 }
 
-func (logger *LoggerConfig) DPanic(ctx context.Context, msg string, fields ...zap.Field) {
+func DPanicWithCtxFields(ctx context.Context, msg string, fields ...zap.Field) {
+	logger := getDefaultLogger()
 	if ctx != nil {
 		fields = append(fields, logger.getKvFromCtx(ctx)...)
 	}
 	logger.engine.DPanic(msg, fields...)
-}
-
-func (logger *LoggerConfig) Panic(ctx context.Context, msg string, fields ...zap.Field) {
-	if ctx != nil {
-		fields = append(fields, logger.getKvFromCtx(ctx)...)
-	}
-	logger.engine.Panic(msg, fields...)
-}
-
-func (logger *LoggerConfig) Fatal(ctx context.Context, msg string, fields ...zap.Field) {
-	if ctx != nil {
-		fields = append(fields, logger.getKvFromCtx(ctx)...)
-	}
-	logger.engine.Fatal(msg, fields...)
-}
-
-func (logger *LoggerConfig) Sync() error {
-	return logger.engine.Sync()
 }
