@@ -29,6 +29,7 @@ func newDefaultLogger() *LoggerConfig {
 	if err != nil {
 		log.Fatal("init logger failed", zap.Error(err))
 	}
+	l.engine = l.engine.WithOptions(zap.AddCallerSkip(1))
 
 	l.WithGrpcMetadata()
 	l.WithContextFields(getStandardCtxFieldsMap())
