@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/nioliu/commons/log"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -11,10 +12,7 @@ import (
 	"time"
 )
 
-func GetCallLogFunc(ctx context.Context, logger *zap.Logger) grpc.UnaryServerInterceptor {
-	if logger == nil {
-		logger, _ = zap.NewDevelopment()
-	}
+func GetCallLogFunc() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		incomingContext, _ := metadata.FromIncomingContext(ctx)
 
@@ -48,16 +46,13 @@ func GetCallLogFunc(ctx context.Context, logger *zap.Logger) grpc.UnaryServerInt
 
 		infoJson, _ := json.Marshal(infos)
 
-		logger.Info("CallLog", zap.String("info", string(infoJson)))
+		log.InfoWithCtxFields(ctx, "CallLog", zap.String("info", string(infoJson)))
 		return resp, err
 	}
 }
 
 // GetBackCallLogFunc Stdout log and customer fields, key is from ctx, will do ctx.Value(key...)
-func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) grpc.UnaryClientInterceptor {
-	if logger == nil {
-		logger, _ = zap.NewDevelopment()
-	}
+func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		before := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
@@ -71,13 +66,6 @@ func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) 
 			"Duration": fmt.Sprintf("%dms", duration),
 		}
 
-		// customer key
-		if key != nil {
-			for _, k := range key {
-				infos[k] = ctx.Value(k)
-			}
-		}
-
 		// metadata
 		md, b := metadata.FromOutgoingContext(ctx)
 		if b {
@@ -88,7 +76,7 @@ func GetBackCallLogFunc(ctx context.Context, logger *zap.Logger, key ...string) 
 
 		jsonInfo, _ := json.Marshal(infos)
 
-		logger.Info("BackCallLog", zap.String("info", string(jsonInfo)))
+		log.InfoWithCtxFields(ctx, "BackCallLog", zap.String("info", string(jsonInfo)))
 		return err
 	}
 }
