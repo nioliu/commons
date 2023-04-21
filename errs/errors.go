@@ -11,8 +11,9 @@ import (
 
 // ErrRsp common err rsp
 type ErrRsp struct {
-	Code        int    `json:"code"`
-	Description string `json:"description"`
+	Code        int    `json:"code,omitempty"`
+	Description string `json:"description,omitempty"`
+	Detail      string `json:"detail,omitempty"`
 }
 
 func (e *ErrRsp) Error() string {
@@ -27,6 +28,11 @@ func (e *ErrRsp) Error() string {
 
 func (e *ErrRsp) WithDescription(dsp string) *ErrRsp {
 	e.Description = dsp
+	return e
+}
+
+func (e *ErrRsp) WithDetail(detail string) *ErrRsp {
+	e.Detail = detail
 	return e
 }
 
