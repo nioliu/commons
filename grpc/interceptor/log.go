@@ -29,14 +29,17 @@ func GetCallLogFunc() grpc.UnaryServerInterceptor {
 		after := time.Now()
 		duration := after.Sub(before).Microseconds()
 
+		reqBytes, _ := json.Marshal(req)
+		rspBytes, _ := json.Marshal(resp)
+
 		infos := map[string]interface{}{
 			"RemoteIp":       remoteIp,
 			"RemoteProtocol": remoteProtocol,
-			"Req":            req,
+			"Req":            string(reqBytes),
 			"FullMethod":     info.FullMethod,
 			"Server":         info.Server,
-			"Resp":           resp,
-			"Error":          err,
+			"Resp":           string(rspBytes),
+			"Error":          err.Error(),
 			"Duration":       fmt.Sprintf("%dms", duration),
 		}
 
@@ -58,10 +61,13 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		duration := time.Now().Sub(before)
 
+		reqBytes, _ := json.Marshal(req)
+		rspBytes, _ := json.Marshal(reply)
+
 		infos := map[string]interface{}{
-			"Req":      req,
+			"Req":      string(reqBytes),
 			"target":   cc.Target(),
-			"Resp":     reply,
+			"Resp":     string(rspBytes),
 			"Error":    err,
 			"Duration": fmt.Sprintf("%dms", duration),
 		}
