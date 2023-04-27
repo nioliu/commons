@@ -3,7 +3,6 @@ package interceptor
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/nioliu/commons/log"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -34,7 +33,7 @@ func GetCallLogFunc() grpc.UnaryServerInterceptor {
 
 		before := time.Now()
 		resp, err = handler(ctx, req)
-		duration := time.Now().Sub(before).Microseconds()
+		duration := time.Now().Sub(before)
 
 		reqBytes, _ := json.Marshal(req)
 		rspBytes, _ := json.Marshal(resp)
@@ -50,7 +49,7 @@ func GetCallLogFunc() grpc.UnaryServerInterceptor {
 			zap.String("remote_protocol", remoteProtocol),
 			zap.String("full_method", info.FullMethod),
 			zap.String("error", errStr),
-			zap.String("duration", fmt.Sprintf("%dms", duration)))
+			zap.Duration("duration", duration))
 		return resp, err
 	}
 }
@@ -79,7 +78,15 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 
 		duration := time.Now().Sub(before)
 		reqBytes, _ := json.Marshal(req)
+		if reqByte, ok := req.([]byte); ok { // 转换byte
+			reqBytes = reqByte
+		}
+
 		rspBytes, _ := json.Marshal(reply)
+		if rspByte, ok := reply.([]byte); ok { // 转换byte
+			rspBytes = rspByte
+		}
+
 		errStr := ""
 		if err != nil {
 			errStr = err.Error()
@@ -90,7 +97,7 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 			zap.String("rsp", string(rspBytes)),
 			zap.String("target", cc.Target()),
 			zap.String("error", errStr),
-			zap.String("duration", fmt.Sprintf("%dms", duration)),
+			zap.Duration("duration", duration),
 		)
 
 		return err
