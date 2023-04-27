@@ -50,7 +50,7 @@ func GetCallLogFunc() grpc.UnaryServerInterceptor {
 			zap.String("remote_protocol", remoteProtocol),
 			zap.String("full_method", info.FullMethod),
 			zap.String("error", errStr),
-			zap.Duration("duration", duration))
+			zap.String("duration", duration.String()))
 		return resp, err
 	}
 }
@@ -104,7 +104,7 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 			zap.ByteString("rsp", rspBytes),
 			zap.String("target", cc.Target()),
 			zap.String("error", errStr),
-			zap.Duration("duration", duration),
+			zap.String("duration", duration.String()),
 		)
 
 		return err
