@@ -31,7 +31,7 @@ func newDefaultLogger() *LoggerConfig {
 	}
 	l.engine = l.engine.WithOptions(zap.AddCallerSkip(1))
 
-	l.WithGrpcMetadata()
+	//l.WithGrpcMetadata()
 	l.WithContextFields(getStandardCtxFieldsMap())
 
 	return l
