@@ -66,12 +66,16 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 			traceIdStr, ok := traceId.(string)
 			if ok {
 				// insert trace id into outgoing metadata
-				outgoingContext, b := metadata.FromOutgoingContext(ctx)
+				outgoingMd, b := metadata.FromOutgoingContext(ctx)
 				if b {
-					outgoingContext.Set("trace_id", traceIdStr)
+					outgoingMd.Set("trace_id", traceIdStr)
+				} else {
+					outgoingMd = metadata.New(map[string]string{
+						"trace_id": traceIdStr,
+					})
 				}
 				// overwrite outgoing ctx
-				ctx = metadata.NewOutgoingContext(ctx, outgoingContext)
+				ctx = metadata.NewOutgoingContext(ctx, outgoingMd)
 			}
 		}
 
