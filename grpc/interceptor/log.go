@@ -43,8 +43,8 @@ func GetCallLogFunc() grpc.UnaryServerInterceptor {
 		}
 
 		log.InfoWithCtxFields(ctx, "call",
-			zap.String("req", string(reqBytes)),
-			zap.String("rsp", string(rspBytes)),
+			zap.ByteString("req", reqBytes),
+			zap.ByteString("rsp", rspBytes),
 			zap.String("remote_ip", remoteIp),
 			zap.String("remote_protocol", remoteProtocol),
 			zap.String("full_method", info.FullMethod),
@@ -93,8 +93,8 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 		}
 
 		log.InfoWithCtxFields(ctx, "backcall",
-			zap.String("req", string(reqBytes)),
-			zap.String("rsp", string(rspBytes)),
+			zap.ByteString("req", reqBytes),
+			zap.ByteString("rsp", rspBytes),
 			zap.String("target", cc.Target()),
 			zap.String("error", errStr),
 			zap.Duration("duration", duration),
