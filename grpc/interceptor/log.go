@@ -14,8 +14,6 @@ import (
 
 func GetCallLogFunc() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		incomingContext, _ := metadata.FromIncomingContext(ctx)
-
 		p, b := peer.FromContext(ctx)
 		var remoteIp string
 		var remoteProtocol string
@@ -45,24 +43,14 @@ func GetCallLogFunc() grpc.UnaryServerInterceptor {
 			errStr = err.Error()
 		}
 
-		infos := map[string]interface{}{
-			"RemoteIp":       remoteIp,
-			"RemoteProtocol": remoteProtocol,
-			"Req":            string(reqBytes),
-			"FullMethod":     info.FullMethod,
-			"Server":         info.Server,
-			"Resp":           string(rspBytes),
-			"Error":          errStr,
-			"Duration":       fmt.Sprintf("%dms", duration),
-		}
-
-		for k, v := range incomingContext {
-			infos[k] = v
-		}
-
-		infoJson, _ := json.Marshal(infos)
-
-		log.InfoWithCtxFields(ctx, "CallLog", zap.String("info", string(infoJson)))
+		log.InfoWithCtxFields(ctx, "call",
+			zap.String("req", string(reqBytes)),
+			zap.String("rsp", string(rspBytes)),
+			zap.String("remote_ip", remoteIp),
+			zap.String("remote_protocol", remoteProtocol),
+			zap.String("full_method", info.FullMethod),
+			zap.String("error", errStr),
+			zap.String("duration", fmt.Sprintf("%dms", duration)))
 		return resp, err
 	}
 }
@@ -88,8 +76,8 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 		}
 
 		err := invoker(ctx, method, req, reply, cc, opts...)
-		duration := time.Now().Sub(before)
 
+		duration := time.Now().Sub(before)
 		reqBytes, _ := json.Marshal(req)
 		rspBytes, _ := json.Marshal(reply)
 		errStr := ""
@@ -97,25 +85,14 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 			errStr = err.Error()
 		}
 
-		infos := map[string]interface{}{
-			"Req":      string(reqBytes),
-			"target":   cc.Target(),
-			"Resp":     string(rspBytes),
-			"Error":    errStr,
-			"Duration": fmt.Sprintf("%dms", duration),
-		}
+		log.InfoWithCtxFields(ctx, "backcall",
+			zap.String("req", string(reqBytes)),
+			zap.String("rsp", string(rspBytes)),
+			zap.String("target", cc.Target()),
+			zap.String("error", errStr),
+			zap.String("duration", fmt.Sprintf("%dms", duration)),
+		)
 
-		// metadata
-		md, b := metadata.FromOutgoingContext(ctx)
-		if b {
-			for k, v := range md {
-				infos[k] = v
-			}
-		}
-
-		jsonInfo, _ := json.Marshal(infos)
-
-		log.InfoWithCtxFields(ctx, "BackCallLog", zap.String("info", string(jsonInfo)))
 		return err
 	}
 }
