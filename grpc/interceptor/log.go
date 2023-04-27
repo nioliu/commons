@@ -1,6 +1,7 @@
 package interceptor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/nioliu/commons/log"
@@ -79,11 +80,13 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 		duration := time.Now().Sub(before)
 		reqBytes, _ := json.Marshal(req)
 		if reqByte, ok := req.([]byte); ok { // 转换byte
+			reqByte = bytes.ReplaceAll(reqByte, []byte("\n"), []byte(""))
 			reqBytes = reqByte
 		}
 
 		rspBytes, _ := json.Marshal(reply)
 		if rspByte, ok := reply.([]byte); ok { // 转换byte
+			rspByte = bytes.ReplaceAll(rspByte, []byte("\n"), []byte(""))
 			rspBytes = rspByte
 		}
 
