@@ -15,9 +15,30 @@ func TestCreateSnowflakeId(t *testing.T) {
 	}
 	println(interfaces)
 
-	i := interfaces[0]
-	id := CreateSnowflakeId(i.HardwareAddr.String())
-	println(id)
+	inter := interfaces[0]
+
+	s := sync.Map{}
+	group := sync.WaitGroup{}
+	for i := 0; i < 100000; i++ {
+		group.Add(1)
+		go func() {
+			//id := CreateSnowflakeId(i.HardwareAddr.String())
+			id2 := CreateShortSnowflakeId(inter.HardwareAddr.String())
+			println(id2)
+			_, ok := s.Load(id2)
+			if ok {
+				log.Fatalln("repeat", id2)
+			} else {
+				s.Store(id2, "")
+
+			}
+			group.Done()
+		}()
+
+	}
+	group.Wait()
+
+	//println(id)
 }
 
 func TestOutF(t *testing.T) {

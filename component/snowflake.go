@@ -69,6 +69,44 @@ func CreateSnowflakeId(machineId string) string {
 	return milli + machineId + se + strconv.Itoa(conf.mark)
 }
 
+// CreateShortSnowflakeId 短位生成
+func CreateShortSnowflakeId(machineId string) string {
+	if !clear.doing {
+		clear.Mutex.Lock()
+		go clearExpiredConf()
+		clear.doing = true
+		clear.Mutex.Unlock()
+	}
+	// 准备信息
+	now := time.Now()
+	//second := strconv.Itoa(int(now.Unix()))
+	key := now.Format("20060102150405") + machineId
+
+	// 同一秒加锁
+	mapLock.Lock()
+	conf, ok := locks[key]
+	if !ok {
+		conf = &confs{
+			Mutex: &sync.Mutex{},
+			seq:   0,
+			mark:  0,
+			t:     strconv.Itoa(int(now.Unix())),
+		}
+		locks[key] = conf
+	}
+	conf.Lock()
+	defer conf.Unlock()
+
+	mapLock.Unlock()
+
+	// 序列自增
+	conf.seq += 1
+	// 固定位数
+	se := fmt.Sprintf("%.3d", conf.seq)
+	// 生成唯一id
+	return key + se + strconv.Itoa(conf.mark)
+}
+
 // ClearExpiredConf clear expired conf from map
 func clearExpiredConf() {
 	// check again
