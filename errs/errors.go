@@ -40,6 +40,13 @@ func (e *ErrRsp) Err() *ErrRsp {
 	return e
 }
 
+func (e *ErrRsp) IsEqual(err *ErrRsp) bool {
+	if err == nil {
+		return false
+	}
+	return e.Code == err.Code
+}
+
 // GetDefaultErrRsp default
 func GetDefaultErrRsp() *ErrRsp {
 	return &ErrRsp{Code: 0, Description: "Unknown"}
