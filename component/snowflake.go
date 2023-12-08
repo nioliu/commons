@@ -2,13 +2,23 @@ package component
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"sync"
 	"time"
 )
 
 var mapLock = sync.Mutex{}      // 对map加锁
-var locks = map[string]*confs{} // 对时间戳加锁
+var locks = map[string]*confs{} // 对时间戳+machineId加锁
+
+// 上一次最新的时间戳
+type lastTimestamp struct {
+	sync.Mutex       // 读写锁，更新的时候不能读，读的时候不能更新
+	t          int64 // 时间戳数值
+}
+
+var lastT = lastTimestamp{Mutex: sync.Mutex{}}
+
 var clear = &task{
 	Mutex: sync.Mutex{},
 	doing: false,
@@ -21,7 +31,7 @@ type task struct {
 
 type confs struct {
 	*sync.Mutex
-	seq  int
+	seq  int // 逻辑时钟，如果时间戳相等，那么就用内部的逻辑时钟
 	mark int
 	t    string
 }
@@ -32,15 +42,23 @@ type confs struct {
 // 63bit	1bit	符号位，不做处理
 
 // CreateSnowflakeId 三台机器 每台qps 10W -> 1ms 100w条
-func CreateSnowflakeId(machineId string) string {
+func CreateSnowflakeId(machineId string) (string, error) {
 	if !clear.doing {
 		clear.Mutex.Lock()
+		// 也是保证时间回拨的一个机制
 		go clearExpiredConf()
 		clear.doing = true
 		clear.Mutex.Unlock()
 	}
 	// 准备信息
 	now := time.Now()
+
+	// 防止时钟回拨，只允许比上一个时间戳大的存在
+	now, err := checkClockBack(now)
+	if err != nil {
+		return "", err
+	}
+
 	milli := strconv.Itoa(int(now.UnixMilli()))
 	key := milli + machineId
 
@@ -64,13 +82,38 @@ func CreateSnowflakeId(machineId string) string {
 	// 序列自增
 	conf.seq += 1
 	// 固定位数
+	if conf.seq >= int(math.Pow10(12)) {
+		// 休眠一秒，继续生成
+		time.Sleep(time.Millisecond)
+		return CreateShortSnowflakeId(machineId)
+	}
+	// 固定位数
 	se := fmt.Sprintf("%.12d", conf.seq)
 	// 生成唯一id
-	return milli + machineId + se + strconv.Itoa(conf.mark)
+	return milli + machineId + se + strconv.Itoa(conf.mark), nil
+}
+
+// 检查是否发生了始终回拨
+func checkClockBack(now time.Time) (time.Time, error) {
+	n := 0
+	lastT.Mutex.Lock()
+	defer lastT.Mutex.Unlock()
+	for {
+		// 增加写锁，一旦被接受，就要更新last时间戳
+		if now.UnixMilli() >= lastT.t {
+			now = time.Now() // 更新时间戳
+			lastT.t = now.UnixMilli()
+			break
+		} else if n >= 100 {
+			return time.Time{}, fmt.Errorf("generate id failed, clock back happened")
+		}
+		n += 1
+	}
+	return now, nil
 }
 
 // CreateShortSnowflakeId 短位生成
-func CreateShortSnowflakeId(machineId string) string {
+func CreateShortSnowflakeId(machineId string) (string, error) {
 	if !clear.doing {
 		clear.Mutex.Lock()
 		go clearExpiredConf()
@@ -79,11 +122,19 @@ func CreateShortSnowflakeId(machineId string) string {
 	}
 	// 准备信息
 	now := time.Now()
+
+	// 防止时钟回拨，只允许比上一个时间戳大的存在
+	now, err := checkClockBack(now)
+	if err != nil {
+		return "", err
+	}
+
 	//second := strconv.Itoa(int(now.Unix()))
 	key := now.Format("20060102150405") + machineId
 
 	// 同一秒加锁
 	mapLock.Lock()
+
 	conf, ok := locks[key]
 	if !ok {
 		conf = &confs{
@@ -101,10 +152,15 @@ func CreateShortSnowflakeId(machineId string) string {
 
 	// 序列自增
 	conf.seq += 1
-	// 固定位数
+	// 固定位数 这里是3位，也就是说同一时间戳内可以生成1000个id
+	if conf.seq >= int(math.Pow10(3)) {
+		// 休眠一秒，继续生成
+		time.Sleep(time.Millisecond)
+		return CreateShortSnowflakeId(machineId)
+	}
 	se := fmt.Sprintf("%.3d", conf.seq)
 	// 生成唯一id
-	return key + se + strconv.Itoa(conf.mark)
+	return key + se + strconv.Itoa(conf.mark), nil
 }
 
 // ClearExpiredConf clear expired conf from map
@@ -113,7 +169,7 @@ func clearExpiredConf() {
 	if clear.doing {
 		return
 	}
-	for true {
+	for {
 		// clear map each 10 second
 		time.Sleep(time.Second * 10)
 		for k, v := range locks {
@@ -125,6 +181,7 @@ func clearExpiredConf() {
 				continue
 			}
 			uti := time.UnixMilli(int64(unixTime))
+			// 10s的时钟回拨？吓死人。
 			if time.Now().After(uti.Add(time.Second * 10)) {
 				delete(locks, k)
 			}
