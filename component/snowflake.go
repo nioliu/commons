@@ -41,8 +41,8 @@ type confs struct {
 // 22～62bit	41bits	用来记录时间戳，这里可以记录69年
 // 63bit	1bit	符号位，不做处理
 
-// CreateSnowflakeId 三台机器 每台qps 10W -> 1ms 100w条
-func CreateSnowflakeId(machineId string) (string, error) {
+// CreateSnowflakeIdV2 三台机器 每台qps 10W -> 1ms 100w条
+func CreateSnowflakeIdV2(machineId string) (string, error) {
 	if !clear.doing {
 		clear.Mutex.Lock()
 		// 也是保证时间回拨的一个机制
@@ -85,7 +85,7 @@ func CreateSnowflakeId(machineId string) (string, error) {
 	if conf.seq >= int(math.Pow10(12)) {
 		// 休眠一秒，继续生成
 		time.Sleep(time.Millisecond)
-		return CreateShortSnowflakeId(machineId)
+		return CreateShortSnowflakeIdV2(machineId)
 	}
 	// 固定位数
 	se := fmt.Sprintf("%.12d", conf.seq)
@@ -112,8 +112,8 @@ func checkClockBack(now time.Time) (time.Time, error) {
 	return now, nil
 }
 
-// CreateShortSnowflakeId 短位生成
-func CreateShortSnowflakeId(machineId string) (string, error) {
+// CreateShortSnowflakeIdV2 短位生成
+func CreateShortSnowflakeIdV2(machineId string) (string, error) {
 	if !clear.doing {
 		clear.Mutex.Lock()
 		go clearExpiredConf()
@@ -156,7 +156,7 @@ func CreateShortSnowflakeId(machineId string) (string, error) {
 	if conf.seq >= int(math.Pow10(3)) {
 		// 休眠一秒，继续生成
 		time.Sleep(time.Millisecond)
-		return CreateShortSnowflakeId(machineId)
+		return CreateShortSnowflakeIdV2(machineId)
 	}
 	se := fmt.Sprintf("%.3d", conf.seq)
 	// 生成唯一id
@@ -187,4 +187,80 @@ func clearExpiredConf() {
 			}
 		}
 	}
+}
+
+// CreateSnowflakeId 三台机器 每台qps 10W -> 1ms 100w条
+func CreateSnowflakeId(machineId string) string {
+	if !clear.doing {
+		clear.Mutex.Lock()
+		go clearExpiredConf()
+		clear.doing = true
+		clear.Mutex.Unlock()
+	}
+	// 准备信息
+	now := time.Now()
+	milli := strconv.Itoa(int(now.UnixMilli()))
+	key := milli + machineId
+
+	// 同一毫秒加锁
+	mapLock.Lock()
+	conf, ok := locks[key]
+	if !ok {
+		conf = &confs{
+			Mutex: &sync.Mutex{},
+			seq:   0,
+			mark:  0,
+			t:     milli,
+		}
+		locks[key] = conf
+	}
+	conf.Lock()
+	defer conf.Unlock()
+
+	mapLock.Unlock()
+
+	// 序列自增
+	conf.seq += 1
+	// 固定位数
+	se := fmt.Sprintf("%.12d", conf.seq)
+	// 生成唯一id
+	return milli + machineId + se + strconv.Itoa(conf.mark)
+}
+
+// CreateShortSnowflakeId 短位生成
+func CreateShortSnowflakeId(machineId string) string {
+	if !clear.doing {
+		clear.Mutex.Lock()
+		go clearExpiredConf()
+		clear.doing = true
+		clear.Mutex.Unlock()
+	}
+	// 准备信息
+	now := time.Now()
+	//second := strconv.Itoa(int(now.Unix()))
+	key := now.Format("20060102150405") + machineId
+
+	// 同一秒加锁
+	mapLock.Lock()
+	conf, ok := locks[key]
+	if !ok {
+		conf = &confs{
+			Mutex: &sync.Mutex{},
+			seq:   0,
+			mark:  0,
+			t:     strconv.Itoa(int(now.Unix())),
+		}
+		locks[key] = conf
+	}
+	conf.Lock()
+	defer conf.Unlock()
+
+	mapLock.Unlock()
+
+	// 序列自增
+	conf.seq += 1
+	// 固定位数
+	se := fmt.Sprintf("%.3d", conf.seq)
+	// 生成唯一id
+	return key + se + strconv.Itoa(conf.mark)
 }
