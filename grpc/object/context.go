@@ -70,7 +70,7 @@ func SetRecMsgMilliSecondTimeToMd(md *metadata.MD, t int64) error {
 		return errs.NewError(0, "metadata is nil")
 	}
 	if t == 0 {
-		t = time.Now().Unix()
+		t = time.Now().UnixMilli()
 	}
 	md.Append(string(RecMsgMilliSecondTimeKey), strconv.Itoa(int(t)))
 	return nil

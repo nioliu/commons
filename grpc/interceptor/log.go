@@ -30,6 +30,8 @@ func GetCallLogFunc() grpc.UnaryServerInterceptor {
 				traceIdStr := traceId[0]
 				ctx = context.WithValue(ctx, "trace_id", traceIdStr)
 			}
+			// set all the metadata to new outgoing ctx
+			ctx = metadata.NewOutgoingContext(ctx, fromIncomingContext)
 		}
 
 		before := time.Now()
