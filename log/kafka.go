@@ -26,7 +26,7 @@ var defaultLogTopics = []string{"log-1", "log-2", "log-3"}
 
 var currTopicIndex = atomic.Int32{}
 
-var brokers = []string{"localhost:9092"}
+var brokers = []string{"kafka-compose-kafka-1:9092"}
 
 func withKafkaCore(ec *zapcore.EncoderConfig) *kafkaCore {
 	writer := &kafka.Writer{

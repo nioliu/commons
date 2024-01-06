@@ -37,8 +37,6 @@ func newDefaultLogger() *LoggerConfig {
 	//l.WithGrpcMetadata()
 	l.WithContextFields(getStandardCtxFieldsMap())
 
-	zapcore.NewTee()
-
 	return l
 }
 
