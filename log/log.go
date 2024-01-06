@@ -27,7 +27,7 @@ func init() {
 
 func newDefaultLogger() *LoggerConfig {
 	l := &LoggerConfig{}
-	l.engine, err = GetStandardLogger("Asia/Shanghai",
+	l.engine, err = getEngine("Asia/Shanghai",
 		"2006-01-02 15:04:05 Z07", "time", "")
 	if err != nil {
 		log.Fatal("init logger failed", zap.Error(err))
@@ -65,8 +65,8 @@ func getStandardCtxFieldsMap() map[string]interface{} {
 	return m
 }
 
-// GetStandardLogger 包含标准输出以及根据环境变量是否使用kafka
-func GetStandardLogger(timeZone, timeFormat, timeKey, stackTraceKey string) (*zap.Logger, error) {
+// getEngine 包含标准输出以及根据环境变量是否使用kafka
+func getEngine(timeZone, timeFormat, timeKey, stackTraceKey string) (*zap.Logger, error) {
 	cores := make([]zapcore.Core, 0)
 	standardCore, encoderConfig, err := withStandardCore(timeZone, timeFormat, timeKey, stackTraceKey)
 	if err != nil {
@@ -76,7 +76,7 @@ func GetStandardLogger(timeZone, timeFormat, timeKey, stackTraceKey string) (*za
 	}
 	// with kafka
 	if os.Getenv(WithKafka) == "true" {
-		withKafkaCore(encoderConfig)
+		cores = append(cores, withKafkaCore(encoderConfig))
 	}
 	return zap.New(zapcore.NewTee(cores...)), nil
 }
