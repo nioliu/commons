@@ -2,9 +2,11 @@ package log
 
 import (
 	"context"
+	"fmt"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"io"
 	"os"
 	"sync/atomic"
 	"time"
@@ -84,12 +86,17 @@ func (c *kafkaCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 		return err
 	}
 
-	return c.writer.WriteMessages(context.Background(), kafka.Message{
-		Key:   []byte(c.serviceName),
-		Topic: getTopic(),
-		Value: buf.Bytes(),
-		Time:  time.Now(),
-	})
+	go func() {
+		if err := c.writer.WriteMessages(context.Background(), kafka.Message{
+			Key:   []byte(c.serviceName),
+			Topic: getTopic(),
+			Value: buf.Bytes(),
+			Time:  time.Now(),
+		}); err != nil {
+			io.WriteString(os.Stdout, fmt.Sprintf("Log Error: %s", err.Error()))
+		}
+	}()
+	return nil
 }
 
 func (c *kafkaCore) Sync() error {
