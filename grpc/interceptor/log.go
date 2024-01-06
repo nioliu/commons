@@ -105,6 +105,7 @@ func GetBackCallLogFunc() grpc.UnaryClientInterceptor {
 			zap.ByteString("req", reqBytes),
 			zap.ByteString("rsp", rspBytes),
 			zap.String("target", cc.Target()),
+			zap.String("method", method),
 			zap.String("error", errStr),
 			zap.String("duration", duration.String()),
 		)

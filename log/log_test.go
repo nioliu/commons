@@ -17,3 +17,9 @@ func TestLog(t *testing.T) {
 	t.Log(string(marshal))
 	InfoWithCtxFields(ctx, "这是信息")
 }
+
+func TestTopic(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		go func() { println(getTopic()) }()
+	}
+}

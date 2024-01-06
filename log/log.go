@@ -6,14 +6,17 @@ import (
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc/metadata"
 	"log"
+	"os"
 	"time"
 )
 
 type LoggerConfig struct {
-	engine            *zap.Logger
+	engine            *zap.Logger            // 实际的logger引擎
 	ctxFields         map[string]interface{} // fields need to be printed from context, map[name]ctxIndex
 	printGrpcMetadata bool                   // choose if print grpc metadata, it also should set the key and value to ctxFields
 }
+
+const WithKafka = "WITH_KAFKA"
 
 var logger = &LoggerConfig{}
 var err error
@@ -33,6 +36,8 @@ func newDefaultLogger() *LoggerConfig {
 
 	//l.WithGrpcMetadata()
 	l.WithContextFields(getStandardCtxFieldsMap())
+
+	zapcore.NewTee()
 
 	return l
 }
@@ -60,13 +65,30 @@ func getStandardCtxFieldsMap() map[string]interface{} {
 	return m
 }
 
+// GetStandardLogger 包含标准输出以及根据环境变量是否使用kafka
 func GetStandardLogger(timeZone, timeFormat, timeKey, stackTraceKey string) (*zap.Logger, error) {
+	cores := make([]zapcore.Core, 0)
+	standardCore, encoderConfig, err := withStandardCore(timeZone, timeFormat, timeKey, stackTraceKey)
+	if err != nil {
+		return nil, err
+	} else {
+		cores = append(cores, standardCore.Core())
+	}
+	// with kafka
+	if os.Getenv(WithKafka) == "true" {
+		withKafkaCore(encoderConfig)
+	}
+	return zap.New(zapcore.NewTee(cores...)), nil
+}
+
+func withStandardCore(timeZone string, timeFormat string, timeKey string,
+	stackTraceKey string) (*zap.Logger, *zapcore.EncoderConfig, error) {
 	// set some option
 	config := zap.NewProductionEncoderConfig()
 
 	location, err := time.LoadLocation(timeZone)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	config.EncodeTime = func(t time.Time, encoder zapcore.PrimitiveArrayEncoder) {
@@ -79,8 +101,12 @@ func GetStandardLogger(timeZone, timeFormat, timeKey, stackTraceKey string) (*za
 	config.StacktraceKey = stackTraceKey
 	productionConfig := zap.NewProductionConfig()
 	productionConfig.EncoderConfig = config
+	build, err := productionConfig.Build()
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return productionConfig.Build()
+	return build, &config, nil
 }
 
 // extract key and value from config, and set each field's name to key, value to map's value
