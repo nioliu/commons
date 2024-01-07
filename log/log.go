@@ -76,7 +76,7 @@ func getEngine(timeZone, timeFormat, timeKey, stackTraceKey string) (*zap.Logger
 	if os.Getenv(WithKafka) == "true" {
 		cores = append(cores, withKafkaCore(encoderConfig))
 	}
-	return zap.New(zapcore.NewTee(cores...), zap.AddCaller()), nil
+	return zap.New(zapcore.NewTee(cores...), zap.AddCaller(), zap.AddCallerSkip(1)), nil
 }
 
 func withStandardCore(timeZone string, timeFormat string, timeKey string,
