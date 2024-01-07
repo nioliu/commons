@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"io"
 	"os"
+	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -80,6 +81,8 @@ func (c *kafkaCore) Check(entry zapcore.Entry, checkedEntry *zapcore.CheckedEntr
 	return checkedEntry
 }
 
+const retryHeaderKey = "retry_times"
+
 func (c *kafkaCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 	buf, err := c.encoder.EncodeEntry(entry, fields)
 	if err != nil {
@@ -92,6 +95,11 @@ func (c *kafkaCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 			Topic: getTopic(),
 			Value: buf.Bytes(),
 			Time:  time.Now(),
+			// 加入重试标识
+			Headers: []kafka.Header{{
+				Key:   retryHeaderKey,
+				Value: []byte(strconv.Itoa(0)),
+			}},
 		}); err != nil {
 			io.WriteString(os.Stdout, fmt.Sprintf("Log Error: %s", err.Error()))
 		}
