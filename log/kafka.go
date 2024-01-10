@@ -21,7 +21,7 @@ type kafkaCore struct {
 	serviceName string
 }
 
-const batchSize = 10
+const batchSize = 20
 const globalKeyEnv = "SERVICE_NAME"
 
 // 默认的日志topics
@@ -37,6 +37,7 @@ func withKafkaCore(ec *zapcore.EncoderConfig) *kafkaCore {
 		Balancer:               &kafka.LeastBytes{}, // 选择数据量最小的分区写入
 		BatchSize:              batchSize,           // 批量发送设置
 		AllowAutoTopicCreation: true,                // 自动创建topic
+		Async:                  true,
 	}
 
 	return &kafkaCore{
