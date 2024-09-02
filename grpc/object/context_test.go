@@ -21,3 +21,17 @@ func TestGetRecMsgSecondTimeFromCtx(t *testing.T) {
 	}
 	t.Log(fromCtx)
 }
+
+func TestApiKey(t *testing.T) {
+	m := &metadata.MD{}
+	err := SetInnerApiKeyToMd(m)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	ctx := metadata.NewIncomingContext(context.Background(), *m)
+	fromCtx, err := CheckInnerApiKey(ctx)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	t.Log(fromCtx)
+}
