@@ -7,6 +7,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/nioliu/protocols v0.0.0-20221205125010-64ea8cb1175a
+	github.com/segmentio/kafka-go v0.4.47
 	go.uber.org/zap v1.23.0
 	google.golang.org/grpc v1.51.0
 )
@@ -17,7 +18,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/pierrec/lz4/v4 v4.1.19 // indirect
-	github.com/segmentio/kafka-go v0.4.47 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/net v0.17.0 // indirect

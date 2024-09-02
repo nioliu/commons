@@ -13,6 +13,7 @@ type ContextKey string
 const RecMsgSecondTimeKey = ContextKey("event_time_sec")
 const RecMsgMilliSecondTimeKey = ContextKey("event_time_milli")
 const TraceId = ContextKey("trace_id")
+const InnerApiKey = ContextKey("inner_api_key")
 
 func GetRecMsgSecondTimeFromCtx(ctx context.Context) (int64, error) {
 	// get receive msg timestamp
@@ -74,4 +75,25 @@ func SetRecMsgMilliSecondTimeToMd(md *metadata.MD, t int64) error {
 	}
 	md.Append(string(RecMsgMilliSecondTimeKey), strconv.Itoa(int(t)))
 	return nil
+}
+
+func SetInnerApiKeyToMd(md *metadata.MD, key string) error {
+	if md == nil {
+		return errs.NewError(0, "metadata is nil")
+	}
+	md.Append(string(InnerApiKey), key)
+	return nil
+}
+
+func GetInnerApiKeyFromCtx(ctx context.Context) (string, error) {
+	md, exist := metadata.FromIncomingContext(ctx)
+	if !exist {
+		return "", errs.NewError(0, "can't find expected metadata info")
+	}
+	apiKey := md[string(InnerApiKey)]
+	if len(apiKey) != 1 {
+		return "", errs.NewError(0, "unexpected time value from metadata")
+	}
+
+	return apiKey[0], nil
 }
