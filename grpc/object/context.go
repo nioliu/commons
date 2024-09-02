@@ -15,6 +15,7 @@ const RecMsgSecondTimeKey = ContextKey("event_time_sec")
 const RecMsgMilliSecondTimeKey = ContextKey("event_time_milli")
 const TraceId = ContextKey("trace_id")
 const InnerApiKey = ContextKey("inner_api_key")
+const UserIdKey = ContextKey("user_id")
 const ApiKeyName = "INNER_API_KEY"
 
 func GetRecMsgSecondTimeFromCtx(ctx context.Context) (int64, error) {
@@ -102,4 +103,12 @@ func CheckInnerApiKey(ctx context.Context) (bool, error) {
 	}
 
 	return os.Getenv(ApiKeyName) == apiKey[0], nil
+}
+
+func GetUserIDFromCtx(ctx context.Context) (string, error) {
+	md, existed := metadata.FromIncomingContext(ctx)
+	if existed && len(md.Get(string(UserIdKey))) >= 1 {
+		return md.Get(string(UserIdKey))[0], nil
+	}
+	return "", errs.NewError(0, "can't find user id in anywhere")
 }
