@@ -13,7 +13,8 @@ import (
 	"time"
 )
 
-func PreActionForGolang(ctx context.Context, req *http.Request, now time.Time, errRsp *errs.ErrRsp) (context.Context, *errs.ErrRsp, int) {
+func PreActionForGolang(ctx context.Context, req *http.Request, now time.Time) (context.Context, *errs.ErrRsp, int) {
+	var errRsp *errs.ErrRsp
 	dumpRequest, err := httputil.DumpRequest(req, true)
 	if err == nil {
 		log.InfoWithCtxFields(ctx, "receive request", zap.String("request content", string(dumpRequest)))
