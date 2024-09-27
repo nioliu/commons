@@ -40,6 +40,8 @@ func PreActionForGolang(ctx context.Context, req *http.Request, now time.Time) (
 	ctx = context.WithValue(ctx, "trace_id", traceId)
 	regionData := GetReginData(req)
 	ctx = context.WithValue(ctx, "region_data", regionData)
+
+	return ctx, nil, http.StatusOK
 }
 
 func GetTraceId(r *http.Request) string {
