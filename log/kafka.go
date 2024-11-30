@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"io"
@@ -32,12 +33,23 @@ var currTopicIndex = atomic.Int32{}
 var brokers = []string{"b2s-kafka:9092"}
 
 func withKafkaCore(ec *zapcore.EncoderConfig) *kafkaCore {
+	ku := os.Getenv("KAFKA_USERNAME")
+	kp := os.Getenv("KAFKA_PASSWORD")
+
+	sharedTransport := &kafka.Transport{
+		SASL: plain.Mechanism{
+			Username: ku,
+			Password: kp,
+		},
+	}
+
 	writer := &kafka.Writer{
 		Addr:                   kafka.TCP(brokers...),
 		Balancer:               &kafka.LeastBytes{}, // 选择数据量最小的分区写入
 		BatchSize:              batchSize,           // 批量发送设置
 		AllowAutoTopicCreation: true,                // 自动创建topic
 		Async:                  true,
+		Transport:              sharedTransport,
 	}
 
 	return &kafkaCore{
