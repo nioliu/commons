@@ -2,6 +2,7 @@ package log
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/plain"
@@ -37,6 +38,7 @@ func withKafkaCore(ec *zapcore.EncoderConfig) *kafkaCore {
 	kp := os.Getenv("KAFKA_PASSWORD")
 
 	sharedTransport := &kafka.Transport{
+		TLS: &tls.Config{},
 		SASL: plain.Mechanism{
 			Username: ku,
 			Password: kp,
