@@ -30,7 +30,7 @@ var defaultLogTopics = []string{"log-1", "log-2", "log-3"}
 
 var currTopicIndex = atomic.Int32{}
 
-var brokers = []string{"b2s-kafka:9092"}
+var brokers = []string{"pkc-619z3.us-east1.gcp.confluent.cloud:9092"}
 
 func withKafkaCore(ec *zapcore.EncoderConfig) *kafkaCore {
 	ku := os.Getenv("KAFKA_USERNAME")
