@@ -52,6 +52,8 @@ func withKafkaCore(ec *zapcore.EncoderConfig) *kafkaCore {
 		Transport:              sharedTransport,
 	}
 
+	println("kafka writer create success")
+
 	return &kafkaCore{
 		encoder:     zapcore.NewJSONEncoder(*ec),
 		writer:      writer,
