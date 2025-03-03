@@ -27,7 +27,7 @@ const batchSize = 20
 const globalKeyEnv = "SERVICE_NAME"
 
 // 默认的日志topics
-var defaultLogTopics = []string{"log-1", "log-2", "log-3"}
+var defaultLogTopics = []string{"log-1"}
 
 var currTopicIndex = atomic.Int32{}
 
@@ -118,6 +118,7 @@ func (c *kafkaCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 				Value: []byte(strconv.Itoa(0)),
 			}},
 		}); err != nil {
+			println("write message error", err.Error())
 			io.WriteString(os.Stdout, fmt.Sprintf("Log Error: %s", err.Error()))
 		}
 	}()
