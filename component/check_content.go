@@ -15,6 +15,7 @@ import (
 const dataServiceUrl = "http://data-service:8080"
 
 func CheckContent(ctx context.Context, req *httpproto.CheckContentReq) (*httpproto.CheckContentRsp, error) {
+
 	baseURL := dataServiceUrl + "/v1/data/content/check"
 	reqBytes, err := json.Marshal(req)
 	if err != nil {

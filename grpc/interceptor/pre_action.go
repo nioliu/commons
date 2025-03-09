@@ -9,27 +9,22 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 	"net/http"
-	"net/http/httputil"
 	"time"
 )
 
 func PreActionForGolang(ctx context.Context, req *http.Request, now time.Time) (context.Context, *errs.ErrRsp, int) {
 	var errRsp *errs.ErrRsp
-	dumpRequest, err := httputil.DumpRequest(req, true)
-	if err == nil {
-		log.InfoWithCtxFields(ctx, "receive request", zap.String("request content", string(dumpRequest)))
-	}
 
 	// fill metadata
 	m := &metadata.MD{}
-	if err = object.SetRecMsgSecondTimeToMd(m, now.Unix()); err != nil {
+	if err := object.SetRecMsgSecondTimeToMd(m, now.Unix()); err != nil {
 		log.ErrorWithCtxFields(ctx, "set time to md failed", zap.Error(err))
 
 		errRsp = &errs.ErrRsp{Code: 1, Description: "internal service error"}
 		return ctx, errRsp, http.StatusInternalServerError
 	}
 
-	if err = object.SetRecMsgMilliSecondTimeToMd(m, now.UnixMilli()); err != nil {
+	if err := object.SetRecMsgMilliSecondTimeToMd(m, now.UnixMilli()); err != nil {
 		log.ErrorWithCtxFields(ctx, "set milli sec time failed", zap.Error(err))
 		errRsp = &errs.ErrRsp{Code: 1, Description: "internal service error"}
 		return ctx, errRsp, http.StatusInternalServerError
