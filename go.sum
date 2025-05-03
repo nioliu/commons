@@ -28,6 +28,8 @@ github.com/nioliu/protocols v0.0.0-20221205125010-64ea8cb1175a/go.mod h1:pUuGu2s
 github.com/nioliu/protocols v0.0.3 h1:BVZkWNfPSCeVzFrLvNJ4SffD3G8lxFgLgYaZOTFrpKQ=
 github.com/nioliu/protocols v0.0.3/go.mod h1:FPCGOm8kmof31hONRW+Di3Vr8GG1n9/pp6Bgpoizun8=
 github.com/nioliu/protocols v0.0.4-0.20250302074629-4041c5b8d06b/go.mod h1:1IEq2UECb1yt7P/eMuK4k+WWDePPLgTyRcDwlXDdQSQ=
+github.com/nioliu/protocols v0.0.4-0.20250503062532-3b3b9b72361d/go.mod h1:1IEq2UECb1yt7P/eMuK4k+WWDePPLgTyRcDwlXDdQSQ=
+github.com/nioliu/protocols v0.0.4-0.20250503084342-1181a58e4244/go.mod h1:1IEq2UECb1yt7P/eMuK4k+WWDePPLgTyRcDwlXDdQSQ=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=
 github.com/onsi/gomega v1.18.1 h1:M1GfJqGRrBrrGGsbxzV5dqM2U2ApXefZCQpkukxYRLE=
